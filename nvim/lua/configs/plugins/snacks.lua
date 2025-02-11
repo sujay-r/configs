@@ -67,7 +67,7 @@ return {
 			desc = "Grep",
 		},
 
-		-- Diagnostics
+		-- Diagnostics pickers
 		{
 			"<leader>db",
 			function()
@@ -76,7 +76,7 @@ return {
 			desc = "Diagnostics for current buffer",
 		},
 
-		-- LSP
+		-- LSP pickers
 		{
 			"gr",
 			function()
@@ -97,6 +97,13 @@ return {
 				Snacks.picker.lsp_symbols()
 			end,
 			desc = "LSP symbols",
+		},
+		{
+			"<leader>G",
+			function()
+				Snacks.lazygit.open()
+			end,
+			desc = "Open LazyGit",
 		},
 	},
 }
