@@ -41,6 +41,7 @@ return {
 					},
 				},
 				lsp_symbols = {
+					focus = "list",
 					layout = {
 						preset = "sidebar",
 						layout = {
