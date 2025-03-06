@@ -22,14 +22,30 @@ return {
 					},
 				},
 				diagnostics_buffer = {
+					focus = "list",
 					layout = {
 						preset = "select",
+						layout = {
+							position = "bottom",
+						},
+					},
+				},
+				lsp_references = {
+					focus = "list",
+					layout = {
+						preset = "default",
+						layout = {
+							height = 0.4,
+							position = "bottom",
+						},
 					},
 				},
 				lsp_symbols = {
 					layout = {
 						preset = "sidebar",
-						position = "right",
+						layout = {
+							position = "right",
+						},
 					},
 				},
 			},
