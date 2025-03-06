@@ -72,6 +72,7 @@ return {
 	},
 	{ "saadparwaiz1/cmp_luasnip" },
 	{ "hrsh7th/cmp-buffer" },
+	{ "hrsh7th/cmp-nvim-lsp-signature-help" },
 	{ "onsails/lspkind.nvim" },
 	{
 		"hrsh7th/nvim-cmp",
@@ -87,6 +88,7 @@ return {
 					{ name = "nvim_lsp" },
 					{ name = "buffer" },
 					{ name = "luasnip" },
+					{ name = "nvim_lsp_signature_help" },
 				},
 
 				-- Snippet engine configuration
