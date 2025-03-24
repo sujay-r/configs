@@ -27,6 +27,7 @@ return {
 			"rafamadriz/friendly-snippets",
 			"nvim-tree/nvim-web-devicons",
 			"onsails/lspkind.nvim",
+			"fang2hou/blink-copilot",
 		},
 		version = "*",
 		opts = {
@@ -35,7 +36,44 @@ return {
 				nerd_font_variant = "mono",
 			},
 			sources = {
-				default = { "lsp", "path", "snippets", "buffer" },
+				default = { "lsp", "copilot", "path", "snippets", "buffer" },
+				providers = {
+					lsp = {
+						name = "lsp",
+						enabled = true,
+						module = "blink.cmp.sources.lsp",
+						score_offset = 1000,
+					},
+					path = {
+						name = "path",
+						enabled = true,
+						module = "blink.cmp.sources.path",
+						score_offset = 950,
+					},
+					snippets = {
+						name = "snippets",
+						enabled = true,
+						module = "blink.cmp.sources.snippets",
+						score_offset = 900,
+					},
+					buffer = {
+						name = "buffer",
+						enabled = true,
+						module = "blink.cmp.sources.buffer",
+						score_offset = 850,
+						min_keyword_length = 3,
+					},
+					copilot = {
+						name = "copilot",
+						enabled = true,
+						module = "blink-copilot",
+						score_offset = 0,
+						async = true,
+						opts = {
+							max_completions = 1,
+						},
+					},
+				},
 			},
 			fuzzy = { implementation = "prefer_rust_with_warning" },
 			snippets = { preset = "default" },
