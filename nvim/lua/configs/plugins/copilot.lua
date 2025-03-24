@@ -11,6 +11,7 @@ return {
 		dependencies = {
 			"nvim-lua/plenary.nvim",
 			"nvim-treesitter/nvim-treesitter",
+			"j-hui/fidget.nvim",
 		},
 		opts = {
 			adapters = {
@@ -57,6 +58,8 @@ return {
 			},
 		},
 		init = function()
+			require("configs.extra_setup.fidget-spinner"):init()
+
 			vim.keymap.set(
 				{ "n", "v" },
 				"<leader>ca",
