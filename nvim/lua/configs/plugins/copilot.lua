@@ -4,6 +4,9 @@ return {
 		ft = { "markdown", "codecompanion" },
 	},
 	{
+		"github/copilot.vim",
+	},
+	{
 		"olimorris/codecompanion.nvim",
 		dependencies = {
 			"nvim-lua/plenary.nvim",
@@ -11,6 +14,15 @@ return {
 		},
 		opts = {
 			adapters = {
+				copilot = function()
+					return require("codecompanion.adapters").extend("copilot", {
+						schema = {
+							model = {
+								default = "claude-3.7-sonnet",
+							},
+						},
+					})
+				end,
 				openai = function()
 					return require("codecompanion.adapters").extend("openai", {
 						schema = {
@@ -34,13 +46,13 @@ return {
 			},
 			strategies = {
 				chat = {
-					adapter = "openai",
+					adapter = "copilot",
 				},
 				inline = {
-					adapter = "openai",
+					adapter = "copilot",
 				},
 				cmd = {
-					adapter = "openai",
+					adapter = "copilot",
 				},
 			},
 		},
