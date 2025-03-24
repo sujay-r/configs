@@ -58,7 +58,7 @@ return {
 			},
 		},
 		init = function()
-			require("configs.plugins.fidget-spinner"):init()
+			require("configs.extra_setup.fidget-spinner"):init()
 
 			vim.keymap.set(
 				{ "n", "v" },
