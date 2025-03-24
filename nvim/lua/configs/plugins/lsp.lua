@@ -33,7 +33,7 @@ return {
 		opts = {
 			keymap = { preset = "default" },
 			appearance = {
-				nerd_font_variant = "mono",
+				nerd_font_variant = "normal",
 			},
 			sources = {
 				default = { "lsp", "copilot", "path", "snippets", "buffer" },
@@ -77,18 +77,20 @@ return {
 			},
 			fuzzy = { implementation = "prefer_rust_with_warning" },
 			snippets = { preset = "default" },
-			signature = { enabled = true },
+			signature = { enabled = true, window = { border = "single" } },
 			completion = {
-				documentation = { auto_show = true, auto_show_delay_ms = 500 },
+				documentation = { auto_show = true, auto_show_delay_ms = 500, window = { border = "single" } },
 				ghost_text = { enabled = true },
 				menu = {
+					border = "single",
 					draw = {
+						columns = { { "kind_icon" }, { "label", "label_description", gap = 1 } },
 						components = {
 							kind_icon = {
 								ellipsis = false,
 								text = function(ctx)
 									local icon = ctx.kind_icon
-									if vim.tbl_contains({ "Path" }, ctx.source_name) then
+									if vim.tbl_contains({ "path", "copilot" }, ctx.source_name) then
 										local dev_icon, _ = require("nvim-web-devicons").get_icon(ctx.label)
 										if dev_icon then
 											icon = dev_icon
@@ -103,7 +105,20 @@ return {
 								end,
 								highlight = function(ctx)
 									local hl = ctx.kind_hl
-									if vim.tbl_contains({ "Path" }, ctx.source_name) then
+									if vim.tbl_contains({ "path", "copilot" }, ctx.source_name) then
+										local dev_icon, dev_hl = require("nvim-web-devicons").get_icon(ctx.label)
+										if dev_icon then
+											hl = dev_hl
+										end
+									end
+
+									return hl
+								end,
+							},
+							kind = {
+								highlight = function(ctx)
+									local hl = ctx.kind_hl
+									if vim.tbl_contains({ "path", "copilot" }, ctx.source_name) then
 										local dev_icon, dev_hl = require("nvim-web-devicons").get_icon(ctx.label)
 										if dev_icon then
 											hl = dev_hl
