@@ -13,12 +13,15 @@ return {
 			mason_config.setup({
 				handlers = {
 					function(server_name)
-						local config = { capabilities = {} }
-						config.capabilities = require("blink.cmp").get_lsp_capabilities(config.capabilities)
-						require("lspconfig")[server_name].setup(config)
+						if server_name ~= "jdtls" then
+							local config = { capabilities = {} }
+							config.capabilities = require("blink.cmp").get_lsp_capabilities(config.capabilities)
+							require("lspconfig")[server_name].setup(config)
+						end
 					end,
 				},
 			})
+			require("configs.extra_setup.java")
 		end,
 	},
 	{
@@ -172,5 +175,9 @@ return {
 				end,
 			})
 		end,
+	},
+	{
+		"mfussenegger/nvim-jdtls",
+		ft = "java",
 	},
 }
