@@ -21,7 +21,6 @@ return {
 					end,
 				},
 			})
-			require("configs.extra_setup.java")
 		end,
 	},
 	{

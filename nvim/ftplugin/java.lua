@@ -75,7 +75,7 @@ local config = {
 				runtimes = {
 					{
 						name = "JavaSE-24",
-						path = "/home/sujay/jdk24/bin/java",
+						path = "/home/sujay/jdk24",
 					},
 				},
 			},
