@@ -13,9 +13,11 @@ return {
 			mason_config.setup({
 				handlers = {
 					function(server_name)
-						local config = { capabilities = {} }
-						config.capabilities = require("blink.cmp").get_lsp_capabilities(config.capabilities)
-						require("lspconfig")[server_name].setup(config)
+						if server_name ~= "jdtls" then
+							local config = { capabilities = {} }
+							config.capabilities = require("blink.cmp").get_lsp_capabilities(config.capabilities)
+							require("lspconfig")[server_name].setup(config)
+						end
 					end,
 				},
 			})
@@ -155,7 +157,7 @@ return {
 					vim.keymap.set("n", "go", "<cmd>lua vim.lsp.buf.type_definition()<cr>", opts)
 					-- vim.keymap.set("n", "gr", "<cmd>lua vim.lsp.buf.references()<cr>", opts)
 					vim.keymap.set("n", "<F2>", "<cmd>lua vim.lsp.buf.rename()<cr>", opts)
-					vim.keymap.set("n", "<C-.>", "<cmd>lua vim.lsp.buf.code_actions()<cr>", opts)
+					vim.keymap.set("n", "<C-.>", "<cmd>lua vim.lsp.buf.code_action()<cr>", opts)
 				end,
 			})
 
@@ -172,5 +174,9 @@ return {
 				end,
 			})
 		end,
+	},
+	{
+		"mfussenegger/nvim-jdtls",
+		ft = "java",
 	},
 }
