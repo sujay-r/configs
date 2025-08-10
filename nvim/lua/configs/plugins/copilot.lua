@@ -135,6 +135,46 @@ If no directory is specified, do it for the current directory.
 						},
 					},
 				},
+				["Activate serena project"] = {
+					strategy = "workflow",
+					description = "Activates the current project with serena",
+					opts = {
+						auto_submit = true,
+						stop_context_insertion = true,
+					},
+					prompts = {
+						{
+							{
+								role = "user",
+								opts = { auto_submit = false },
+								content = "Use @{serena} to activate the project `/path/to/project/here`. Keep the explanations to a minimum and just call tools.",
+							},
+						},
+						{
+							{
+								name = "Prompt again on failure/premature stoppage",
+								role = "user",
+								content = "Are you finished with the onboarding? If not, please continue again. If yes, reply '[DONE]'.",
+								opts = { auto_submit = true },
+								repeat_until = function(chat)
+									local config = require("codecompanion.config")
+									local index = #chat.messages
+									local llm_content
+									while index > 0 do
+										local message = chat.messages[index]
+										if message.role == config.constants.LLM_ROLE then
+											llm_content = message.content
+											break
+										end
+										index = index - 1
+									end
+
+									return string.find(llm_content, "[DONE]") ~= nil
+								end,
+							},
+						},
+					},
+				},
 			},
 			strategies = {
 				chat = {
