@@ -95,114 +95,24 @@ return {
 				end,
 			},
 			prompt_library = {
-				["Code test"] = {
-					strategy = "chat",
-					description = "Get some advice",
-					opts = {
-						mapping = "<leader>ce",
-						modes = { "v" },
-						short_name = "expert",
-						auto_submit = true,
-						stop_context_insertion = true,
-						user_prompt = true,
-					},
-					prompts = {
-						{
-							role = "system",
-							content = function(context)
-								return "I want you to act as a senior "
-									.. context.filetype
-									.. " developer. I will ask you specific questions and I want you to return concise explanations and codeblock examples."
-							end,
-						},
-						{
-							role = "user",
-							content = function(context)
-								local text = require("codecompanion.helpers.actions").get_code(
-									context.start_line,
-									context.end_line
-								)
-
-								return "I have the following code:\n\n```"
-									.. context.filetype
-									.. "\n"
-									.. text
-									.. "\n```\n\n"
-							end,
-							opts = {
-								contains_code = true,
-							},
-						},
-					},
-				},
-				["Test workflow"] = {
-					strategy = "workflow",
-					description = "test workflow",
-					opts = {
-						auto_submit = true,
-						stop_context_insertion = true,
-						user_prompt = true,
-					},
-					prompts = {
-						{
-							{
-								role = "system",
-								content = function(context)
-									return fmt(
-										"You carefully provide accurate, factual, thoughtful, nuanced answers, and are brilliant at reasoning. If you think there might not be a correct answer, you say so. Always spend a few sentences explaining background context, assumptions, and step-by-step thinking BEFORE you try to answer a question. Don't be verbose in your answers, but do provide details and examples where it might help the explanation. You are an expert software engineer for the %s language",
-										context.filetype
-									)
-								end,
-								opts = {
-									visible = false,
-								},
-							},
-							{
-								role = "user",
-								content = "I want you to ",
-								opts = {
-									auto_submit = false,
-								},
-							},
-						},
-						{
-							{
-								role = "user",
-								content = "Great. Now let's consider your code. I'd like you to check it carefully for any mistakes or optimizations that can be done.",
-								opts = {
-									auto_submit = true,
-								},
-							},
-						},
-						{
-							{
-								role = "user",
-								content = "Thanks, now let's revise the code based on your feedback without additional explanations.",
-								opts = {
-									auto_submit = true,
-								},
-							},
-						},
-					},
-				},
 				["Generate Unit Tests"] = {
 					strategy = "workflow",
 					description = "Generate unit tests for the current directory of code",
 					opts = {
 						auto_submit = true,
 						stop_context_insertion = true,
+						user_prompt = true,
 					},
 					prompts = {
 						{
 							{
 								role = "user",
-								opts = { auto_submit = true },
 								content = function()
 									vim.g.codecompanion_auto_tool_mode = true
 
 									return [[### INSTRUCTIONS
 
-Your task is to discover all the python modules in the current directory so that you can generate unit tests for them.
+Your current task is to discover all the python modules in the specified directory so that you can generate unit tests for them.
 
 #### Steps to follow:
 1. Get the directory structure of the current module using the @{neovim__list_directory} tool.
@@ -211,8 +121,16 @@ Your task is to discover all the python modules in the current directory so that
 4. Generate unit test cases for all the code files and add them into the appropriate test file using the @{insert_edit_into_file} tool. Make sure to cover edge cases well.
 5. Then use the @{cmd_runner} tool to run the test suite with `<test_cmd>`. (do this after you are done updating the code)
 
-We will do this in multiple iterations until the unit test case creation is finished.]]
+We will do this in multiple iterations until the unit test case creation is finished.
+
+If no directory is specified, do it for the current directory.
+]]
 								end,
+							},
+							{
+								role = "user",
+								opts = { auto_submit = false },
+								content = "Generate unit tests for the directory: ",
 							},
 						},
 					},
