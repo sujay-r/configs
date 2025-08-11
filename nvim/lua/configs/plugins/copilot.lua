@@ -197,43 +197,43 @@ If no directory is specified, do it for the current directory.
 							},
 						},
 					},
-					["Explain code"] = {
-						strategy = "workflow",
-						description = "Explains the codebase using serena",
-						opts = {
-							auto_submit = true,
-							stop_context_insertion = true,
-						},
-						prompts = {
+				},
+				["Explain code"] = {
+					strategy = "workflow",
+					description = "Explains the codebase using serena",
+					opts = {
+						auto_submit = true,
+						stop_context_insertion = true,
+					},
+					prompts = {
+						{
 							{
-								{
-									role = "user",
-									content = "Use @{serena}, and explain to me ...",
-									opts = { auto_submit = false },
-								},
+								role = "user",
+								content = "Use @{serena}, and explain to me ...",
+								opts = { auto_submit = false },
 							},
+						},
+						{
 							{
-								{
-									name = "Prompt again on failure/premature stoppage",
-									role = "user",
-									content = "Are you finished with the explanation? If not, please continue again. If yes, reply '[DONE]'.",
-									opts = { auto_submit = true },
-									repeat_until = function(chat)
-										local config = require("codecompanion.config")
-										local index = #chat.messages
-										local llm_content
-										while index > 0 do
-											local message = chat.messages[index]
-											if message.role == config.constants.LLM_ROLE then
-												llm_content = message.content
-												break
-											end
-											index = index - 1
+								name = "Prompt again on failure/premature stoppage",
+								role = "user",
+								content = "Are you finished with the explanation? If not, please continue again. If yes, reply '[DONE]'.",
+								opts = { auto_submit = true },
+								repeat_until = function(chat)
+									local config = require("codecompanion.config")
+									local index = #chat.messages
+									local llm_content
+									while index > 0 do
+										local message = chat.messages[index]
+										if message.role == config.constants.LLM_ROLE then
+											llm_content = message.content
+											break
 										end
+										index = index - 1
+									end
 
-										return string.find(llm_content, "[DONE]") ~= nil
-									end,
-								},
+									return string.find(llm_content, "[DONE]") ~= nil
+								end,
 							},
 						},
 					},
