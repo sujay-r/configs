@@ -133,6 +133,29 @@ If no directory is specified, do it for the current directory.
 								content = "Generate unit tests for the directory: ",
 							},
 						},
+						{
+							{
+								name = "Repeat until finished",
+								role = "user",
+								content = "Are you finished with the unit test case creation? If not, please continue. If yes, reply '[DONE]'",
+								opts = { auto_submit = true },
+								repeat_until = function(chat)
+									local config = require("codecompanion.config")
+									local index = #chat.messages
+									local llm_content
+									while index > 0 do
+										local message = chat.messages[index]
+										if message.role == config.constants.LLM_ROLE then
+											llm_content = message.content
+											break
+										end
+										index = index - 1
+									end
+
+									return string.find(llm_content, "[DONE]") ~= nil
+								end,
+							},
+						},
 					},
 				},
 				["Activate serena project"] = {
