@@ -13,27 +13,138 @@ return {
 			mason_config.setup({
 				handlers = {
 					function(server_name)
-						require("lspconfig")[server_name].setup({})
+						if server_name ~= "jdtls" then
+							local config = { capabilities = {} }
+							config.capabilities = require("blink.cmp").get_lsp_capabilities(config.capabilities)
+							require("lspconfig")[server_name].setup(config)
+						end
 					end,
 				},
 			})
 		end,
 	},
-	{ "hrsh7th/cmp-nvim-lsp" },
+	{
+		"saghen/blink.cmp",
+		dependencies = {
+			"rafamadriz/friendly-snippets",
+			"nvim-tree/nvim-web-devicons",
+			"onsails/lspkind.nvim",
+			"fang2hou/blink-copilot",
+		},
+		version = "*",
+		opts = {
+			keymap = { preset = "default" },
+			appearance = {
+				nerd_font_variant = "normal",
+			},
+			sources = {
+				default = { "lsp", "copilot", "path", "snippets", "buffer" },
+				providers = {
+					lsp = {
+						name = "lsp",
+						enabled = true,
+						module = "blink.cmp.sources.lsp",
+						score_offset = 1000,
+					},
+					path = {
+						name = "path",
+						enabled = true,
+						module = "blink.cmp.sources.path",
+						score_offset = 950,
+					},
+					snippets = {
+						name = "snippets",
+						enabled = true,
+						module = "blink.cmp.sources.snippets",
+						score_offset = 900,
+					},
+					buffer = {
+						name = "buffer",
+						enabled = true,
+						module = "blink.cmp.sources.buffer",
+						score_offset = 850,
+						min_keyword_length = 3,
+					},
+					copilot = {
+						name = "copilot",
+						enabled = true,
+						module = "blink-copilot",
+						score_offset = 0,
+						async = true,
+						opts = {
+							max_completions = 1,
+						},
+					},
+				},
+			},
+			fuzzy = { implementation = "prefer_rust_with_warning" },
+			snippets = { preset = "default" },
+			signature = { enabled = true, window = { border = "single" } },
+			completion = {
+				documentation = { auto_show = true, auto_show_delay_ms = 500, window = { border = "single" } },
+				ghost_text = { enabled = true },
+				menu = {
+					border = "single",
+					draw = {
+						columns = { { "kind_icon" }, { "label", "label_description", gap = 1 } },
+						components = {
+							kind_icon = {
+								ellipsis = false,
+								text = function(ctx)
+									local icon = ctx.kind_icon
+									if vim.tbl_contains({ "path", "copilot" }, ctx.source_name) then
+										local dev_icon, _ = require("nvim-web-devicons").get_icon(ctx.label)
+										if dev_icon then
+											icon = dev_icon
+										end
+									else
+										icon = require("lspkind").symbolic(ctx.kind, {
+											mode = "symbol",
+										})
+									end
+
+									return icon .. ctx.icon_gap
+								end,
+								highlight = function(ctx)
+									local hl = ctx.kind_hl
+									if vim.tbl_contains({ "path", "copilot" }, ctx.source_name) then
+										local dev_icon, dev_hl = require("nvim-web-devicons").get_icon(ctx.label)
+										if dev_icon then
+											hl = dev_hl
+										end
+									end
+
+									return hl
+								end,
+							},
+							kind = {
+								highlight = function(ctx)
+									local hl = ctx.kind_hl
+									if vim.tbl_contains({ "path", "copilot" }, ctx.source_name) then
+										local dev_icon, dev_hl = require("nvim-web-devicons").get_icon(ctx.label)
+										if dev_icon then
+											hl = dev_hl
+										end
+									end
+
+									return hl
+								end,
+							},
+						},
+					},
+				},
+			},
+		},
+		opts_extend = { "sources.default" },
+	},
 	{
 		"neovim/nvim-lspconfig",
+		dependencies = { "saghen/blink.cmp" },
 		event = { "BufReadPre", "BufNewFile" },
 		init = function()
 			vim.opt.signcolumn = "yes"
 		end,
 		config = function()
-			local lspconfig_defaults = require("lspconfig").util.default_config
-			lspconfig_defaults.capabilities = vim.tbl_deep_extend(
-				"force",
-				lspconfig_defaults.capabilities,
-				require("cmp_nvim_lsp").default_capabilities()
-			)
-
 			vim.api.nvim_create_autocmd("LspAttach", {
 				desc = "LSP Actions",
 				callback = function(event)
@@ -46,7 +157,7 @@ return {
 					vim.keymap.set("n", "go", "<cmd>lua vim.lsp.buf.type_definition()<cr>", opts)
 					-- vim.keymap.set("n", "gr", "<cmd>lua vim.lsp.buf.references()<cr>", opts)
 					vim.keymap.set("n", "<F2>", "<cmd>lua vim.lsp.buf.rename()<cr>", opts)
-					vim.keymap.set("n", "<C-.>", "<cmd>lua vim.lsp.buf.code_actions()<cr>", opts)
+					vim.keymap.set({ "n", "v" }, "<C-.>", vim.lsp.buf.code_action, opts)
 				end,
 			})
 
@@ -65,74 +176,7 @@ return {
 		end,
 	},
 	{
-		"L3MON4D3/LuaSnip",
-		version = "v2.*",
-		run = "make install_jsregexp",
-		dependencies = { "rafamadriz/friendly-snippets" },
-	},
-	{ "saadparwaiz1/cmp_luasnip" },
-	{ "hrsh7th/cmp-buffer" },
-	{ "hrsh7th/cmp-nvim-lsp-signature-help" },
-	{ "onsails/lspkind.nvim" },
-	{
-		"hrsh7th/nvim-cmp",
-		event = { "InsertEnter" },
-		config = function()
-			local cmp = require("cmp")
-			local lspkind = require("lspkind")
-			require("luasnip.loaders.from_vscode").lazy_load()
-
-			cmp.setup({
-				-- Autocomplete sources
-				sources = {
-					{ name = "nvim_lsp" },
-					{ name = "buffer" },
-					{ name = "luasnip" },
-					{ name = "nvim_lsp_signature_help" },
-				},
-
-				-- Snippet engine configuration
-				snippet = {
-					expand = function(args)
-						require("luasnip").lsp_expand(args.body)
-					end,
-				},
-
-				-- Autocomplete keyboard mappings
-				mapping = cmp.mapping.preset.insert({
-					-- Jump to next snippet placeholder
-					["<C-f>"] = cmp.mapping(function(fallback)
-						local luasnip = require("luasnip")
-						if luasnip.locally_jumpable(1) then
-							luasnip.jump(1)
-						else
-							fallback()
-						end
-					end, { "i", "s" }),
-					-- Jump to previous snippet placeholder
-					["<C-b>"] = cmp.mapping(function(fallback)
-						local luasnip = require("luasnip")
-						if luasnip.locally_jumpable(-1) then
-							luasnip.jump(-1)
-						else
-							fallback()
-						end
-					end, { "i", "s" }),
-				}),
-
-				-- Autocomplete formatting options
-				formatting = {
-					format = lspkind.cmp_format({
-						mode = "symbol",
-						maxwidth = {
-							menu = 50,
-							abbr = 50,
-						},
-						ellipsis_char = "...",
-						show_labelDetails = true,
-					}),
-				},
-			})
-		end,
+		"mfussenegger/nvim-jdtls",
+		ft = "java",
 	},
 }
