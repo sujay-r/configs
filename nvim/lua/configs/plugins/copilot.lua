@@ -31,7 +31,6 @@ return {
 			"j-hui/fidget.nvim",
 		},
 		opts = {
-			send_code = true,
 			extensions = {
 				mcphub = {
 					callback = "mcphub.extensions.codecompanion",
@@ -241,13 +240,13 @@ If no directory is specified, do it for the current directory.
 			},
 			strategies = {
 				chat = {
-					adapter = "llamacpp",
+					adapter = "copilot",
 				},
 				inline = {
-					adapter = "llamacpp",
+					adapter = "copilot",
 				},
 				cmd = {
-					adapter = "llamacpp",
+					adapter = "copilot",
 				},
 			},
 		},
@@ -281,8 +280,6 @@ If no directory is specified, do it for the current directory.
 			"nvim-lua/plenary.nvim",
 		},
 		build = "npm install -g mcp-hub@latest",
-		config = function()
-			require("mcphub").setup()
-		end,
+		config = true,
 	},
 }
