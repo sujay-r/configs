@@ -24,8 +24,9 @@ return {
 				diagnostics_buffer = {
 					focus = "list",
 					layout = {
-						preset = "select",
+						preset = "vscode",
 						layout = {
+							height = 0.4,
 							position = "bottom",
 						},
 					},
