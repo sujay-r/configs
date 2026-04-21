@@ -6,6 +6,8 @@ return {
 			formatters_by_ft = {
 				lua = { "stylua" },
 				python = { "isort", "black" },
+				html = { "prettierd" },
+				javascript = { "prettierd" },
 				java = { "clang_format" },
 			},
 			format_on_save = {
