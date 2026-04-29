@@ -1,0 +1,22 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "gamemaster-herald": {
+      "type": "local",
+      "command": ["/home/sujay/miniconda3/envs/dev/bin/python", "/home/sujay/Code/herald/main.py"],
+      "enabled": true,
+    },
+  },
+  "tools": {
+        "gamemaster-herald_get_task_tool": true,
+        "gamemaster-herald_get_quest_tool": true,
+        "gamemaster-herald_update_task_notes_tool": true,
+        "gamemaster-herald_get_tasks_tool": false,
+        "gamemaster-herald_get_todays_tasks_tool": false,
+        "gamemaster-herald_create_task_tool": false,
+        "gamemaster-herald_create_quest_tool": false,
+        "gamemaster-herald_update_task_due_date_tool": false,
+        "gamemaster-herald_get_quests_tool": false,
+        "gamemaster-herald_get_rewards_tool": false
+    }
+}
