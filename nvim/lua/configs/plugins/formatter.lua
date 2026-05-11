@@ -6,6 +6,7 @@ return {
 			formatters_by_ft = {
 				lua = { "stylua" },
 				python = { "isort", "black" },
+				go = { "gofumpt", "goimports-reviser" },
 				html = { "prettierd" },
 				javascript = { "prettierd" },
 				java = { "clang_format" },

@@ -1,12 +1,17 @@
 return {
 	{
-		"williamboman/mason.nvim",
-		config = function()
-			require("mason").setup({})
-		end,
+		"mason-org/mason.nvim",
+		opts = {},
 	},
 	{
 		"williamboman/mason-lspconfig.nvim",
+		opts = {
+			ensure_installed = { "gopls", "lua_ls" },
+			dependencies = {
+				{ "mason-org/mason.nvim", opts = {} },
+				"neovim/nvim-lspconfig",
+			},
+		},
 		config = function()
 			local mason_config = require("mason-lspconfig")
 
@@ -50,6 +55,18 @@ return {
 
 			mason_config.setup({
 				handlers = {
+					["gopls"] = function()
+						local config = { capabilities = {} }
+						config.capabilities = require("blink.cmp").get_lsp_capabilities(config.capabilities)
+						config.settings = {
+							gopls = {
+								completeUnimported = true,
+								usePlaceholders = true,
+								analyses = { unusedparams = true },
+							},
+						}
+						require("lspconfig").gopls.setup(config)
+					end,
 					function(server_name)
 						if server_name ~= "jdtls" then
 							local config = { capabilities = {} }
@@ -132,7 +149,7 @@ return {
 
 									return icon .. ctx.icon_gap
 								end,
-							highlight = function(ctx)
+								highlight = function(ctx)
 									local hl = ctx.kind_hl
 									if ctx.source_name == "path" then
 										local dev_icon, dev_hl = require("nvim-web-devicons").get_icon(ctx.label)
@@ -143,21 +160,21 @@ return {
 
 									return hl
 								end,
-						},
-						kind = {
-							highlight = function(ctx)
-								local hl = ctx.kind_hl
-								if ctx.source_name == "path" then
-									local dev_icon, dev_hl = require("nvim-web-devicons").get_icon(ctx.label)
-									if dev_icon then
-										hl = dev_hl
+							},
+							kind = {
+								highlight = function(ctx)
+									local hl = ctx.kind_hl
+									if ctx.source_name == "path" then
+										local dev_icon, dev_hl = require("nvim-web-devicons").get_icon(ctx.label)
+										if dev_icon then
+											hl = dev_hl
+										end
 									end
-								end
 
-								return hl
-							end,
+									return hl
+								end,
+							},
 						},
-					},
 					},
 				},
 			},
@@ -206,5 +223,13 @@ return {
 	{
 		"mfussenegger/nvim-jdtls",
 		ft = "java",
+	},
+	{
+		"olexsmir/gopher.nvim",
+		ft = "go",
+		build = function()
+			vim.cmd("silent! GoInstallDeps")
+		end,
+		opts = {},
 	},
 }
