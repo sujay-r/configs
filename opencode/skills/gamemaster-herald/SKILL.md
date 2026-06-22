@@ -14,24 +14,17 @@ compatibility:
 
 ## What is Gamemaster?
 
-Gamemaster is the user's personal task and project management system. It is the collaboration
-surface between the user and their AI agents. Think of it as JIRA for this workflow — tasks
-and quests are the specs, and notes are the audit trail.
+Gamemaster is the user's personal task and project management system. It is the collaboration surface between the user and their AI agents. Think of it as JIRA for this workflow — tasks and quests are the specs, and notes are the audit trail.
 
-**Your role**: You are a coding agent. Gamemaster is not your concern beyond three things —
-reading your delegated work, producing a technical plan, and writing back what you've done.
+**Your role:** You are a coding agent. Gamemaster is not your concern beyond three things — reading your delegated work, producing a technical plan, and writing back what you've done.
 
 ---
 
 ## Delegation Context
 
-Tasks you're handed carry an `opencode` tag in Gamemaster — that's how the user, via Viveka
-(the orchestrating agent), marks work as explicitly delegated to you. It's an audit marker
-only; you never search for tagged work yourself, you're always given specific task or quest
-IDs directly.
+Tasks you're handed carry an `opencode` tag in Gamemaster — that's how the user, via Viveka (the orchestrating agent), marks work as explicitly delegated to you. It's an audit marker only; you never search for tagged work yourself, you're always given specific task or quest IDs directly.
 
-You have no conversational context beyond what's in the task. The `description` and `notes`
-fields are the entire specification — if it isn't written there, you don't know it.
+You have no conversational context beyond what's in the task. The `description` and `notes` fields are the entire specification — if it isn't written there, you don't know it.
 
 ---
 
@@ -44,18 +37,15 @@ Your work follows one of two paths:
 When delegated with a task, you are in the **planning phase**:
 
 1. **Fetch the task** via `get_task_tool` (or `get_quest_tool` if given a quest ID with `includeTasks: true`).
-2. **Read the Scope Document** — the task `notes` field contains a 7-section Scope Document
-   (see "Scope Document Format" below). This is your specification.
+2. **Read the Scope Document** — the task `notes` field contains a 7-section Scope Document (see "Scope Document Format" below). This is your specification.
 3. **Produce a technical plan** covering:
    - Architecture and approach
    - Data model changes (if any)
    - Implementation steps, ordered by user story priority (P1 → P2 → P3)
    - Dependencies and assumptions
    - Research decisions with rationale
-4. **Save the plan** to `specs/<task-title-slug>/plan.md` in the repository.
-   The `<task-title-slug>` is the task title lowercased with spaces replaced by hyphens
-   (e.g., "Fix TUI tool call display" → `specs/fix-tui-tool-call-display/plan.md`).
-5. **Return the plan** in the `delegate_to_agent` response. Do NOT update task notes at this stage.
+4. **Save the plan** — create the directory `specs/<task-title-slug>/` if it doesn't exist, then save the plan to `specs/<task-title-slug>/plan.md`. The `<task-title-slug>` is the task title lowercased with spaces replaced by hyphens (e.g., "Fix TUI tool call display" → `specs/fix-tui-tool-call-display/plan.md`).
+5. **Return the plan** using the Response Protocol (see below). Do NOT update task notes at this stage.
 
 ### Path B: IMPLEMENT (second delegation call, after plan is approved)
 
@@ -68,11 +58,38 @@ When given the same task ID again after your plan has been approved:
 
 ---
 
+## Response Protocol
+
+When returning from a delegation call, you MUST include one of these structured status headers as the first line of your response:
+
+### Plan Ready
+
+```text
+STATUS: PLAN_READY
+
+[Full technical plan — see Technical Plan Format below]
+
+Saved to specs/<task-title-slug>/plan.md
+```
+
+### Blocked
+
+```text
+STATUS: BLOCKED
+
+Issue: [What went wrong — missing info, ambiguous scope, technical constraint]
+Question:
+```
+
+The orchestrator (Viveka) parses the `STATUS:` header to determine next steps. Any response without a `STATUS:` header is treated as an error.
+
+---
+
 ## Scope Document Format
 
 The task `notes` field will contain a Scope Document with this structure:
 
-```
+```markdown
 # Scope Document
 
 ## 1. Problem Statement
@@ -81,13 +98,13 @@ The task `notes` field will contain a Scope Document with this structure:
 - Why this problem matters *now*
 
 ### 1.1 User Stories
-- **US1** - [Brief Title] (Priority: P1)
+- **US1** — (Priority: P1)
   - Plain-language description of who, what, why
   - Why this priority
   - Independent Test: How to verify this story works in isolation
-- **US2** - [Brief Title] (Priority: P2)
+- **US2** — (Priority: P2)
   - ...
-- **US3** - [Brief Title] (Priority: P3)
+- **US3** — (Priority: P3)
   - ...
 
 ## 2. In-Scope
@@ -122,29 +139,57 @@ The task `notes` field will contain a Scope Document with this structure:
 
 ---
 
+## Technical Plan Format
+
+When producing a plan during Path A, use this structure:
+
+```markdown
+# Implementation Plan:
+
+## Technical Context
+- Language/version, primary dependencies, storage, testing framework
+- Target platform, performance goals, constraints
+
+## Project Structure
+- Directory and file layout for this feature
+
+## Research
+- Unknowns investigated during planning
+- Alternatives considered and why rejected
+
+## Design
+- Data model changes (entities, fields, relationships)
+- Key architectural decisions
+
+## Implementation Steps
+- Ordered by user story priority (US1 → US2 → US3)
+- `||` for parallel steps (different files, no shared state)
+- Exact file paths per step
+
+## Risks & Mitigations
+- What could go wrong
+- How the plan accounts for it
+```
+
+---
+
 ## Core Entities (what you need to know)
 
-**Task** — an atomic unit of work. Has a title, description, status (`TODO` | `IN_PROGRESS` | `DONE`),
-and notes (HTML). Notes are your primary feedback channel back to the user.
+**Task** — an atomic unit of work. Has a title, description, status (`TODO` | `IN_PROGRESS` | `DONE`), and notes (HTML). Notes are your primary feedback channel back to the user.
 
-**Quest** — a container grouping related tasks. Fetching a quest gives you all its tasks at once.
-Use this when you've been given a quest ID instead of individual task IDs.
+**Quest** — a container grouping related tasks. Fetching a quest gives you all its tasks at once. Use this when you've been given a quest ID instead of individual task IDs.
 
 ---
 
 ## Session Start — How to Fetch Your Work
 
-You will always be given specific task or quest IDs by the user. You do not discover your
-own work — you fetch only what you've been told to fetch.
+You will always be given specific task or quest IDs by the user. You do not discover your own work — you fetch only what you've been told to fetch.
 
-**Given a quest ID** → call `get_quest_tool` with `includeTasks: true`. This fetches the quest
-and all its tasks in a single call — no separate list-and-filter step needed.
+**Given a quest ID** → call `get_quest_tool` with `includeTasks: true`. This fetches the quest and all its tasks in a single call — no separate list-and-filter step needed.
 
-**Given specific task IDs** → call `get_task_tool` once per ID. There is no batch fetch-by-ID
-tool, so loop over the IDs you were given.
+**Given specific task IDs** → call `get_task_tool` once per ID. There is no batch fetch-by-ID tool, so loop over the IDs you were given.
 
-**Determine which path you're on**: Check if `specs/<task-title-slug>/plan.md` exists.
-If it doesn't → you're in Path A (PLAN). If it does → you're in Path B (IMPLEMENT).
+**Determine which path you're on:** Check if `specs/<task-title-slug>/plan.md` exists. If it doesn't → you're in Path A (PLAN). If it does → you're in Path B (IMPLEMENT).
 
 Do not fetch anything beyond what you've been given. Do not pull all tasks or all quests.
 
@@ -154,8 +199,7 @@ Do not fetch anything beyond what you've been given. Do not pull all tasks or al
 
 Task `description` contains a one-line brief of what needs to be built.
 
-Task `notes` contains the full Scope Document (7 sections) plus any prior progress,
-decisions, or blockers from previous sessions.
+Task `notes` contains the full Scope Document (7 sections) plus any prior progress, decisions, or blockers from previous sessions.
 
 Always read existing notes before starting work. Do not ignore prior context.
 
@@ -163,9 +207,7 @@ Always read existing notes before starting work. Do not ignore prior context.
 
 ## Reporting Back — Notes Rules
 
-`update_task_notes_tool` is your only write operation. Only use it during Path B (IMPLEMENT).
-Do not update notes during Path A (PLAN) — the plan is returned in the delegation response
-and saved to the repo.
+`update_task_notes_tool` is your only write operation. Only use it during Path B (IMPLEMENT). Do not update notes during Path A (PLAN) — the plan is returned in the delegation response and saved to the repo.
 
 When reporting:
 
@@ -176,8 +218,7 @@ When reporting:
 
 **Notes are HTML.** Always write valid HTML. Never write markdown or plain text.
 
-**Notes are append-only.** The tool overwrites the full field — but you must never discard
-prior content. Always:
+**Notes are append-only.** The tool overwrites the full field — but you must never discard prior content. Always:
 
 1. Fetch current notes via `get_task_tool` (the single-task fetch, not a list call)
 2. Append your new dated entry to the existing HTML
@@ -204,13 +245,9 @@ prior content. Always:
 
 ## Write Rules
 
-- **Never create tasks or quests.** You read and you report. Nothing else — this holds even
-  though `create_task_tool` / `create_quest_tool` exist; they're scoped to the
-  orchestrator (Viveka), not to you.
-- **Never update any field other than `notes`.** Status changes, due dates, token rewards,
-  descriptions — all off limits.
-- **Always fetch before writing notes.** Reconstruct the full HTML before calling
-  `update_task_notes_tool`.
+- **Never create tasks or quests.** You read and you report. Nothing else — this holds even though `create_task_tool` / `create_quest_tool` exist; they're scoped to the orchestrator (Viveka), not to you.
+- **Never update any field other than `notes`.** Status changes, due dates, token rewards, descriptions — all off limits.
+- **Always fetch before writing notes.** Reconstruct the full HTML before calling `update_task_notes_tool`.
 - **No confirmation needed for reads.** Fetch freely.
 - **No confirmation needed for note updates** — but always append, never overwrite prior content.
 
@@ -223,4 +260,3 @@ prior content. Always:
 - Modify token rewards, stats, due dates, or any other field besides notes
 - Fetch data beyond the IDs you were given
 - Claim rewards (not applicable to you)
-

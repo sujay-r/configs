@@ -6,17 +6,19 @@ Load this reference when the user asks to delegate coding work to OpenCode.
 
 ## The Pipeline
 
+```text
 SCOPE → DELEGATE:PLAN → REVIEW → DELEGATE:IMPLEMENT → EVALUATE → REPORT
+```
 
 ---
 
-## Stage 1 — SCOPE (You + Viveka)
+## Stage 1 — SCOPE (You + User)
 
 The user describes the feature. You help refine it into a **Scope Document** using the template below. This goes into the task `notes` field.
 
 ### Scope Document Template
 
-```
+```markdown
 # Scope Document
 
 ## 1. Problem Statement
@@ -69,31 +71,126 @@ The user describes the feature. You help refine it into a **Scope Document** usi
 - How a reader would know the problem is well-scoped
 ```
 
-After writing the scope, tag the task `opencode` and delegate via the `delegate_to_agent` tool.
+After writing the scope, tag the task `opencode` and delegate via the `delegate_to_agent` tool
+
+Instruct it to fetch the task ID only, do not provide any additional context — OpenCode will fetch the task and its scope document from Herald.
 
 ---
 
 ## Stage 2 — DELEGATE: PLAN
 
-OpenCode fetches the task and its Scope Document from Herald. It produces a technical plan saved to:
+OpenCode fetches the task, reads the Scope Document from `notes`, and produces a technical plan.
 
-`specs/<task-title-slug>/plan.md`
+It creates the directory:
 
-The plan covers architecture, data model, implementation approach, and any research decisions.
+```text
+specs/<task-title-slug>/
+```
 
-OpenCode returns the plan in the `delegate_to_agent` response. No notes update at this stage.
+and saves the plan to:
+
+```text
+specs/<task-title-slug>/plan.md
+```
+
+The plan is returned in the delegation response.
+
+OpenCode does **NOT** update task notes at this stage.
+
+### Response Protocol
+
+OpenCode's response will begin with one of these status headers.
+
+#### Plan Ready
+
+```text
+STATUS: PLAN_READY
+
+[Full technical plan]
+
+Saved to specs/<task-title-slug>/plan.md
+```
+
+#### Blocked
+
+```text
+STATUS: BLOCKED
+
+Issue: [What went wrong]
+
+Question: [What needs answering before continuing]
+```
+
+If the response has no `STATUS:` header, treat it as an error.
+
+### Technical Plan Format
+
+OpenCode produces plans using this structure:
+
+```markdown
+# Implementation Plan: [Task Title]
+
+## Technical Context
+
+- Language/version, primary dependencies, storage, testing framework
+- Target platform, performance goals, constraints
+
+## Project Structure
+
+- Directory and file layout for this feature
+
+## Research
+
+- Unknowns investigated during planning
+- Alternatives considered and why rejected
+
+## Design
+
+- Data model changes (entities, fields, relationships)
+- Key architectural decisions
+
+## Implementation Steps
+
+- Ordered by user story priority (US1 → US2 → US3)
+- [P] for parallel steps (different files, no shared state)
+- Exact file paths per step
+
+## Risks & Mitigations
+
+- What could go wrong
+- How the plan accounts for it
+```
 
 ---
 
 ## Stage 3 — REVIEW (Viveka)
 
-You read the returned technical plan and sanity-check it against the Scope Document. If issues exist, flag them and iterate via another delegation call. If the plan is sound, approve it.
+Read the returned technical plan.
+
+Sanity-check it against the Scope Document:
+
+- Does it cover all user stories (US1, US2, US3)?
+- Are out-of-scope boundaries respected?
+- Are success criteria addressed in the implementation steps?
+- Are file paths and project structure sensible?
+
+If issues exist, flag them to the user and iterate via another delegation call.
+
+If the plan is sound, tell the user it's approved and ready for implementation.
 
 ---
 
 ## Stage 4 — DELEGATE: IMPLEMENT
 
-A separate delegation call. OpenCode implements per the approved plan.
+A separate delegation call.
+
+Pass the same task ID — OpenCode will detect:
+
+```text
+specs/<task-title-slug>/plan.md
+```
+
+exists and switch to Path B (IMPLEMENT).
 
 ---
 
@@ -101,27 +198,51 @@ A separate delegation call. OpenCode implements per the approved plan.
 
 OpenCode tests the implementation against Section 7 (Success Criteria) from the Scope Document.
 
+This happens automatically — you don't need to instruct it.
+
 ---
 
 ## Stage 6 — REPORT (OpenCode)
 
-OpenCode writes a structured outcome update into the task notes using the dated-entry format (see `references/notes-format.md`).
+OpenCode writes a structured dated entry into task notes with:
 
-The report should include:
-
-- What was implemented
-- Test results against success criteria
+- What was implemented and key decisions
+- Test results against success criteria (pass/fail per criterion)
 - Any deviations from the plan and why
 - Known issues or follow-up items
 
 ---
 
-## Task description — what goes here
+## Task Description — What Goes Here
 
-The `description` field is a one-line brief of what needs to be built — just enough for quick scanning. The Scope Document in `notes` is the full spec.
+The `description` field is a one-line brief of what needs to be built — just enough for quick scanning.
+
+The Scope Document in `notes` is the full specification.
 
 ---
 
-## After delegation
+## After Delegation
 
-The `opencode` tag is an audit marker. It does not replace the explicit `delegate_to_agent` call.
+The `opencode` tag is an audit marker.
+
+It does not replace the explicit `delegate_to_agent` call.
+
+---
+
+## Error Handling
+
+### STATUS: BLOCKED
+
+Relay the issue and question to the user.
+
+The user answers, then re-delegate to continue planning.
+
+### No STATUS Header
+
+Something went off-script.
+
+Tell the user and consider re-delegating with explicit instructions.
+
+### Plan Has Gaps
+
+Tell the user what's missing and iterate with another PLAN delegation.
