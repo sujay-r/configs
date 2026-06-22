@@ -1,0 +1,26 @@
+{
+  "agentCard": {
+    "name": "OpenCode",
+    "description": "Coding sub-agent for Viveka. Handles code generation, debugging, refactoring and codebase exploration.",
+    "version": "1.0.0",
+    "defaultInputModes": ["text"],
+    "defaultOutputModes": ["text"],
+    "protocolVersion": "0.3.0",
+    "streaming": true
+  },
+  "server": {
+    "port": 4021,
+    "hostname": "0.0.0.0",
+    "advertiseHost": "localhost"
+  },
+  "opencode": {
+    "baseUrl": "http://localhost:4096",
+    "model": "",
+    "autoApprove": true,
+    "autoAnswer": true
+  },
+  "features": {
+    "pushNotifications": false,
+    "stateTransitionHistory": false
+  }
+}
