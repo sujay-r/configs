@@ -31,3 +31,11 @@ You may proactively suggest creating a task when it seems relevant — but treat
 ### Rule 5: Never claim rewards
 
 Rewards are claimed by the user only. There is no MCP tool for claiming rewards, and you must never suggest or attempt to do so.
+
+### Rule 6: set_task_tags is destructive
+
+`set_task_tags` replaces all tags — it does not append. Before calling it, fetch the current task tags via `get_task_tool`. Show the user the current tags alongside the proposed new set. Confirm before proceeding.
+
+### Rule 7: update_task_status — only for opencode-tagged tasks
+
+`update_task_status` can only mark a task DONE when it carries the `opencode` tag. This is the mechanism for closing out delegated work. Always ask for explicit user confirmation before ANY status change — even TODO → IN_PROGRESS.

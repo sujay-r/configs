@@ -41,7 +41,8 @@ Gamemaster is a personal productivity PWA built around RPG mechanics. The user m
 ## What You Cannot Do
 
 - Delete any entity — ever.
-- Update any field other than `notes` on a task.
+- Update arbitrary task fields like title, description, or token rewards.
+- Mark a task DONE unless the user explicitly confirms and the task carries the `opencode` tag (enforced by the tool itself, but you must still follow write rules).
 - Modify token balances, stats, buffs, or debuffs.
 - Claim rewards.
 - Create quests (future scope, not yet available).

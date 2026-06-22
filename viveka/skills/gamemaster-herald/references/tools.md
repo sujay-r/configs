@@ -18,6 +18,8 @@ Read tools may be called freely to answer the user's questions or build awarenes
 |------|-------------|
 | `create_task` | Creates a new task with `status: "TODO"` |
 | `update_task_notes` | Overwrites the `notes` field of an existing task |
+| `set_task_tags` | Replaces all tags on an existing task (destructive) |
+| `update_task_status` | Changes a task's status. DONE is gated to `opencode`-tagged tasks only |
 
 Before calling any write tool, load `references/write-rules.md`.
 

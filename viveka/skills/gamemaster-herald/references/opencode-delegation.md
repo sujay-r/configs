@@ -71,7 +71,7 @@ The user describes the feature. You help refine it into a **Scope Document** usi
 - How a reader would know the problem is well-scoped
 ```
 
-After writing the scope, tag the task `opencode` and delegate via the `delegate_to_agent` tool
+After writing the scope, tag the task `opencode` — either by passing `tags: ["opencode"]` at task creation or using `set_task_tags` on an existing task. Then delegate via the `delegate_to_agent` tool.
 
 Instruct it to fetch the task ID only, do not provide any additional context — OpenCode will fetch the task and its scope document from Herald.
 
@@ -226,6 +226,12 @@ The Scope Document in `notes` is the full specification.
 The `opencode` tag is an audit marker.
 
 It does not replace the explicit `delegate_to_agent` call.
+
+---
+
+## Closing Delegated Tasks
+
+After OpenCode reports back via a `STATUS:` header and the user confirms the work is complete, call `update_task_status` to mark the task DONE. The tool enforces the `opencode` gate — you can only close tasks that were explicitly delegated.
 
 ---
 
