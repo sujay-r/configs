@@ -7,7 +7,7 @@ Load this reference when the user asks to delegate coding work to OpenCode.
 ## The Pipeline
 
 ```text
-SCOPE → DELEGATE:PLAN → REVIEW → DELEGATE:IMPLEMENT → EVALUATE → REPORT
+SCOPE → RESOLVE REPO → DELEGATE:PLAN → REVIEW → DELEGATE:IMPLEMENT → EVALUATE → REPORT
 ```
 
 ---
@@ -71,31 +71,58 @@ The user describes the feature. You help refine it into a **Scope Document** usi
 - How a reader would know the problem is well-scoped
 ```
 
-After writing the scope, tag the task `opencode` — either by passing `tags: ["opencode"]` at task creation or using `set_task_tags` on an existing task. Then delegate via the `delegate_to_agent` tool.
-
-Instruct it to fetch the task ID only, do not provide any additional context — OpenCode will fetch the task and its scope document from Herald.
+After writing the scope, tag the task `opencode` — either by passing `tags: ["opencode"]` at task creation or using `set_task_tags` on an existing task.
 
 ---
 
-## Stage 2 — DELEGATE: PLAN
+## Stage 2 — RESOLVE REPOSITORY (Viveka)
+
+OpenCode is started from a parent `Code` directory containing multiple repositories. It has no way to know which one a task targets unless you tell it — **on every delegation call**, not just the first.
+
+**Before the first `delegate_to_agent` call, determine the target repository yourself.** List the repos under the parent `Code` directory, then match against the Scope Document and task/quest context from Stage 1, in this order — stop at the first that produces exactly one match:
+
+1. **Exact directory name** — does a repo directory name match a project name mentioned in the scope conversation?
+2. **Manifest name** — does a `package.json` / `pyproject.toml` / `Cargo.toml` (etc.) name field match?
+3. **README content** — does a repo's README describe the project referenced in the scope?
+4. **Git remote** — does a remote URL match a project name or org referenced in the scope?
+
+Resolve to a single absolute path, e.g. `/home/user/Code/viveka-core`.
+
+**Do not guess past this chain — the failure mode determines the question:**
+
+- **Multiple repos still match** after all four steps → ask the user which one they mean.
+- **Zero repos match** → don't assume that means "create a new one." Ask the user directly: does this target an existing repo you haven't found, or should a new one be created?
+
+**Standing invariant:** a resolved, absolute `Repository:` path is a hard precondition for delegation — same tier as the `opencode` tag. There is no delegation call, PLAN or IMPLEMENT, without one.
+
+Once resolved, hold this path for the task's lifetime — you'll need it again at Stage 5 (DELEGATE:IMPLEMENT), since it is **not** persisted anywhere and must be re-supplied on every delegation call for this task.
+
+---
+
+## Stage 3 — DELEGATE: PLAN
+
+The delegation prompt contains exactly two things — nothing else, no additional scope detail, no restating of context OpenCode can fetch itself:
+
+```text
+Task: <task-id>
+Repository: /absolute/path/to/repo
+```
 
 OpenCode fetches the task, reads the Scope Document from `notes`, and produces a technical plan.
 
 It creates the directory:
 
 ```text
-specs/<task-title-slug>/
+<Repository>/specs/<task-title-slug>/
 ```
 
 and saves the plan to:
 
 ```text
-specs/<task-title-slug>/plan.md
+<Repository>/specs/<task-title-slug>/plan.md
 ```
 
-The plan is returned in the delegation response.
-
-OpenCode does **NOT** update task notes at this stage.
+The plan is returned in the delegation response. OpenCode does **NOT** update task notes at this stage.
 
 ### Response Protocol
 
@@ -108,7 +135,7 @@ STATUS: PLAN_READY
 
 [Full technical plan]
 
-Saved to specs/<task-title-slug>/plan.md
+Saved to <Repository>/specs/<task-title-slug>/plan.md
 ```
 
 #### Blocked
@@ -122,6 +149,8 @@ Question: [What needs answering before continuing]
 ```
 
 If the response has no `STATUS:` header, treat it as an error.
+
+A `BLOCKED` response with an issue naming a missing or ambiguous repository path means Stage 2 wasn't completed correctly — resolve it and re-delegate rather than pushing the question to the user unchanged.
 
 ### Technical Plan Format
 
@@ -163,7 +192,7 @@ OpenCode produces plans using this structure:
 
 ---
 
-## Stage 3 — REVIEW (Viveka)
+## Stage 4 — REVIEW (Viveka)
 
 Read the returned technical plan.
 
@@ -172,7 +201,8 @@ Sanity-check it against the Scope Document:
 - Does it cover all user stories (US1, US2, US3)?
 - Are out-of-scope boundaries respected?
 - Are success criteria addressed in the implementation steps?
-- Are file paths and project structure sensible?
+- Are file paths and project structure sensible, and rooted under the resolved repository?
+- **Does the "Saved to" path in the plan match the exact `Repository:` value you sent?** If OpenCode's plan references a different repo path than what was delegated, treat this as drift, not a minor discrepancy — flag it and re-delegate rather than approving.
 
 If issues exist, flag them to the user and iterate via another delegation call.
 
@@ -180,21 +210,26 @@ If the plan is sound, tell the user it's approved and ready for implementation.
 
 ---
 
-## Stage 4 — DELEGATE: IMPLEMENT
+## Stage 5 — DELEGATE: IMPLEMENT
 
-A separate delegation call.
-
-Pass the same task ID — OpenCode will detect:
+A separate delegation call, same two-line template as Stage 3 — the `Repository:` line is not remembered from the PLAN call, so omitting it here will re-trigger a `BLOCKED` response:
 
 ```text
-specs/<task-title-slug>/plan.md
+Task: <task-id>
+Repository: /absolute/path/to/repo
+```
+
+OpenCode will detect:
+
+```text
+<Repository>/specs/<task-title-slug>/plan.md
 ```
 
 exists and switch to Path B (IMPLEMENT).
 
 ---
 
-## Stage 5 — EVALUATE (OpenCode)
+## Stage 6 — EVALUATE (OpenCode)
 
 OpenCode tests the implementation against Section 7 (Success Criteria) from the Scope Document.
 
@@ -202,7 +237,7 @@ This happens automatically — you don't need to instruct it.
 
 ---
 
-## Stage 6 — REPORT (OpenCode)
+## Stage 7 — REPORT (OpenCode)
 
 OpenCode writes a structured dated entry into task notes with:
 
@@ -225,7 +260,7 @@ The Scope Document in `notes` is the full specification.
 
 The `opencode` tag is an audit marker.
 
-It does not replace the explicit `delegate_to_agent` call.
+It does not replace the explicit `delegate_to_agent` call, and it does not replace the `Repository:` line — the tag says work was delegated, not where.
 
 ---
 
@@ -239,7 +274,7 @@ After OpenCode reports back via a `STATUS:` header and the user confirms the wor
 
 ### STATUS: BLOCKED
 
-Relay the issue and question to the user.
+Relay the issue and question to the user — unless the issue is a missing/ambiguous repository path, which is a Stage 2 failure on your end and should be fixed and re-delegated, not bounced to the user as-is.
 
 The user answers, then re-delegate to continue planning.
 
