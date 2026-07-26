@@ -8,7 +8,7 @@ description: >
   this skill before making any Herald tool call, even for simple reads.
 compatibility:
   required_tools:
-    - Herald MCP (gamemaster-herald)
+    - herald
 ---
 
 # Gamemaster – Herald Skill
@@ -21,7 +21,11 @@ Gamemaster is a personal productivity PWA built around RPG mechanics. The user m
 
 **Task** — an atomic action item. Has a title, optional description, status (`TODO` | `IN_PROGRESS` | `DONE`), optional token reward, optional notes (HTML), and an optional link to a Quest.
 
-**Quest** — a container grouping related tasks. Has a status (`todo` | `completed`). Quests do not directly generate rewards.
+**Quest** — a container grouping related tasks. Has a status with three values:
+- `active` — the quest is in-progress and visible in the main QuestView.
+- `todo` — the quest is backlogged (planned but not yet active). Visible only in the BacklogView, accessible from within the QuestView via "View Backlog".
+- `completed` — the quest is finished.
+When creating a quest via Herald, `status` defaults to `"todo"` (backlog). Quests do not directly generate rewards.
 
 **Resource** — represents the user's character state, split into two categories:
 - *Tokens* (`Care`, `Grind`) — automated, earned by completing tasks, spent on rewards.
