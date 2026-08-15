@@ -17,6 +17,7 @@ Read tools may be called freely to answer the user's questions or build awarenes
 | Tool | Description |
 |------|-------------|
 | `create_task` | Creates a new task with `status: "TODO"` |
+| `create_quest` | Creates a new quest (title, description, notes, type, status — defaults to `"todo"`). Requires explicit confirmation |
 | `update_task_notes` | Overwrites the `notes` field of an existing task |
 | `set_task_tags` | Replaces all tags on an existing task (destructive) |
 | `update_task_status` | Changes a task's status. DONE is gated to `opencode`-tagged tasks only |

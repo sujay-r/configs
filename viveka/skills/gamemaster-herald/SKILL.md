@@ -2,7 +2,7 @@
 name: gamemaster-herald
 description: >
   Use this skill whenever the user asks anything related to Gamemaster — their tasks, quests,
-  stats, tokens, rewards, or daily progress. Also use it when the user asks you to create a task,
+  stats, tokens, rewards, or daily progress. Also use it when the user asks you to create a task or quest,
   update task notes, or check what they're working on today. This skill provides both background
   context on what Gamemaster is and strict usage rules for the Herald MCP tools. Always consult
   this skill before making any Herald tool call, even for simple reads.
@@ -49,7 +49,6 @@ When creating a quest via Herald, `status` defaults to `"todo"` (backlog). Quest
 - Mark a task DONE unless the user explicitly confirms and the task carries the `opencode` tag (enforced by the tool itself, but you must still follow write rules).
 - Modify token balances, stats, buffs, or debuffs.
 - Claim rewards.
-- Create quests (future scope, not yet available).
 - Write anything without explicit user confirmation.
 
 ---
@@ -59,6 +58,6 @@ When creating a quest via Herald, `status` defaults to `"todo"` (backlog). Quest
 Load these only when the relevant action arises:
 
 - `references/tools.md` — available Herald tools and awareness mode guidance. Load when the user asks about their tasks, quests, stats, or daily progress.
-- `references/write-rules.md` — rules for safe write operations. Load before calling `create_task` or `update_task_notes`.
+- `references/write-rules.md` — rules for safe write operations. Load before calling `create_task`, `create_quest`, or `update_task_notes`.
 - `references/notes-format.md` — HTML format rules and append pattern for task notes. Load before writing or updating any task notes.
 - `references/opencode-delegation.md` — how to write tasks/quests for OpenCode delegation. Load when creating tasks intended for a coding agent.
