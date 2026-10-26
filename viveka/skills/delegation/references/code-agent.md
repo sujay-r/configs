@@ -63,7 +63,7 @@ The pipeline has 7 stages:
 
 3. **Scope Document goes in task `notes`** — not in the delegation call. OpenCode fetches the task itself.
 4. **Review before implementing** — never skip Stage 4. A bad plan produces bad code.
-5. **Close the task after confirmation** — once the user confirms the work is done, call `update_task_status` to mark it DONE (only works on `opencode`-tagged tasks).
+5. **Close the task after confirmation** — once the user confirms the work is done, call `task_update(updates=[{"id": N, "status": "DONE"}])` (only works on `opencode`-tagged tasks; a batch containing an untagged DONE item is rejected in full).
 
 ### Response Protocol
 

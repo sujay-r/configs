@@ -17,15 +17,14 @@
     }
   },
   "tools": {
-        "gamemaster-herald_get_task_tool": true,
-        "gamemaster-herald_get_quest_tool": true,
-        "gamemaster-herald_update_task_notes_tool": false,
-        "gamemaster-herald_get_tasks_tool": false,
-        "gamemaster-herald_get_todays_tasks_tool": false,
-        "gamemaster-herald_create_task_tool": false,
-        "gamemaster-herald_create_quest_tool": false,
-        "gamemaster-herald_update_task_due_date_tool": false,
-        "gamemaster-herald_get_quests_tool": false,
-        "gamemaster-herald_get_rewards_tool": false
+        "gamemaster-herald_tasks_list": true,
+        "gamemaster-herald_task_get": true,
+        "gamemaster-herald_quests_list": true,
+        "gamemaster-herald_quest_get": true,
+        "gamemaster-herald_state_get": true,
+        "gamemaster-herald_task_create": false,
+        "gamemaster-herald_task_update": false,
+        "gamemaster-herald_quest_create": false,
+        "gamemaster-herald_quest_update": false
     }
 }

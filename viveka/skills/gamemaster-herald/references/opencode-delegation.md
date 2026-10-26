@@ -71,7 +71,7 @@ The user describes the feature. You help refine it into a **Scope Document** usi
 - How a reader would know the problem is well-scoped
 ```
 
-After writing the scope, tag the task `opencode` — either by passing `tags: ["opencode"]` at task creation or using `set_task_tags` on an existing task.
+After writing the scope, tag the task `opencode` — either by passing `tags: ["opencode"]` at task creation or using `task_update(updates=[{"id": N, "tags": ["...", "opencode"]}])` on an existing task (tags replace the whole set, so include the existing tags).
 
 ---
 
@@ -266,7 +266,7 @@ It does not replace the explicit `delegate_to_agent` call, and it does not repla
 
 ## Closing Delegated Tasks
 
-After OpenCode reports back via a `STATUS:` header and the user confirms the work is complete, call `update_task_status` to mark the task DONE. The tool enforces the `opencode` gate — you can only close tasks that were explicitly delegated.
+After OpenCode reports back via a `STATUS:` header and the user confirms the work is complete, call `task_update(updates=[{"id": N, "status": "DONE"}])` to mark the task DONE. The tool enforces the `opencode` gate — you can only close tasks that were explicitly delegated. The gate is all-or-nothing across a batch: an untagged item rejects the whole call and names the offending IDs, so verify tags with `tasks_list(ids=[...])` before composing the batch.
 
 ---
 

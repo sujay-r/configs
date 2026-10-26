@@ -59,7 +59,7 @@ Your work follows one of two paths. Determine which one you're on using `REPO_PA
 
 ### Path A: PLAN (first delegation call)
 
-1. **Fetch the task** via `get_task_tool` (or `get_quest_tool` with `includeTasks: true` if given a quest ID).
+1. **Fetch the task** via `task_get(task_id, include=["notes"])` — notes are opt-in and carry the full Scope Document. If given a quest ID, `quest_get(quest_id, include=["tasks"])` lists its tasks as summary rows (no notes); fetch each task you need with `task_get` and `include=["notes"]`.
 2. **Read the Scope Document** in the task's `notes` field (7-section format, see below) — this is your specification.
 3. **Produce a technical plan** covering:
    - Architecture and approach
@@ -76,7 +76,7 @@ Your work follows one of two paths. Determine which one you're on using `REPO_PA
 
 ### Path B: IMPLEMENT (second delegation call, after plan approval)
 
-1. **Re-fetch the task** and your previously saved plan from `<REPO_PATH>/specs/<task-title-slug>/plan.md`.
+1. **Re-fetch the task** with `task_get(task_id, include=["notes"])` and your previously saved plan from `<REPO_PATH>/specs/<task-title-slug>/plan.md`.
 2. **Implement** according to the approved plan.
 3. **Evaluate** against Section 7 (Success Criteria) of the Scope Document.
 4. **Report** — append a dated entry to task notes (see "Reporting Back" below).
@@ -196,9 +196,9 @@ Rules of use:
 
 ## Core Entities
 
-**Task** — atomic unit of work. Has title, description, status (`TODO` | `IN_PROGRESS` | `DONE`), and notes (HTML). Notes are your primary feedback channel.
+**Task** — atomic unit of work. Has title, description, status (`TODO` | `IN_PROGRESS` | `DONE`), and notes (Markdown). Notes are your primary feedback channel.
 
-**Quest** — a container grouping related tasks. Fetching a quest returns all its tasks at once — use this when given a quest ID rather than individual task IDs.
+**Quest** — a container grouping related tasks. `quest_get(quest_id, include=["tasks"])` returns summary task rows (id, title, status, counts) — use this when given a quest ID rather than individual task IDs.
 
 ---
 
@@ -206,8 +206,8 @@ Rules of use:
 
 You are always given specific task or quest IDs. You do not discover work yourself.
 
-- **Given a quest ID** → `get_quest_tool` with `includeTasks: true` (fetches quest + all tasks in one call).
-- **Given task IDs** → `get_task_tool` once per ID (no batch fetch-by-ID exists).
+- **Given a quest ID** → `quest_get(quest_id, include=["tasks"])` (quest + all task IDs/titles/statuses in one call). Task *notes* are not included — fetch each task you need with `task_get(task_id, include=["notes"])`.
+- **Given task IDs** → `task_get` once per ID, or `tasks_list(ids=[...])` for a batch read.
 
 Do not fetch anything beyond what you've been given. Do not pull all tasks or all quests.
 
@@ -216,37 +216,35 @@ Do not fetch anything beyond what you've been given. Do not pull all tasks or al
 ## Reading Task Context
 
 - `description` — one-line brief of what needs to be built.
-- `notes` — full Scope Document plus any prior progress, decisions, or blockers from earlier sessions. Always read existing notes before starting; never ignore prior context.
+- `notes` — full Scope Document plus any prior progress, decisions, or blockers from earlier sessions. Notes travel **only** with `include=["notes"]`; neither `detail="full"` nor a nested quest read can inline them. Always read existing notes before starting; never ignore prior context.
 
 ---
 
 ## Reporting Back — Notes Rules
 
-`update_task_notes_tool` is your only write operation, used **only** during Path B (IMPLEMENT). Never update notes during Path A (PLAN) — the plan is returned in the delegation response and saved to the repo instead.
+`task_update` is your only write operation, used **only** during Path B (IMPLEMENT). Never update notes during Path A (PLAN) — the plan is returned in the delegation response and saved to the repo instead.
 
-**Notes are append-only in effect, destructive in mechanism** — the tool overwrites the entire field. So every write must:
+**Append server-side.** Send only the Markdown body; Herald prepends a dated heading and appends it after existing content. You do **not** read the note first and you never reconstruct it.
 
-1. Fetch current notes via `get_task_tool` (single-task fetch).
-2. Append your new dated entry to the existing HTML.
-3. Write the full reconstructed HTML back.
+```python
+task_update(updates=[
+    {"id": 328, "note_append": "- **Plan:** implemented X using approach Y — saved to specs/x/plan.md.\n- **Success Criteria:**\n  - SC-001: PASS — users complete task in under 2 min.\n  - SC-002: PASS — handles 1000 concurrent users.\n- Decided against Z because of W — left a TODO comment in the code."}
+])
+```
 
-**Notes are HTML.** Never write markdown or plain text into this field.
+One call, one receipt. `note_append` and `notes` are mutually exclusive per item; `changed[]` will read `["note_append"]`.
 
-**Dated entry format:**
+**Notes are Markdown.** Never write HTML or plain text into this field — Herald converts your Markdown to HTML for storage.
 
-```html
-<p><strong>29 Apr 2026</strong></p>
-<ul>
-  <li><strong>Plan:</strong> implemented X using approach Y — saved to specs/x/plan.md.</li>
-  <li><strong>Success Criteria:</strong>
-    <ul>
-      <li>SC-001: PASS — users complete task in under 2 min.</li>
-      <li>SC-002: PASS — handles 1000 concurrent users.</li>
-    </ul>
-  </li>
-  <li>Decided against Z because of W — left a TODO comment in the code.</li>
-  <li>Open question: should the API return 404 or empty array for missing quest IDs?</li>
-</ul>
+**Dated entry format** (the `**29 Apr 2026**` heading is added by the server, so omit it):
+
+```markdown
+- **Plan:** implemented X using approach Y — saved to specs/x/plan.md.
+- **Success Criteria:**
+  - SC-001: PASS — users complete task in under 2 min.
+  - SC-002: PASS — handles 1000 concurrent users.
+- Decided against Z because of W — left a TODO comment in the code.
+- Open question: should the API return 404 or empty array for missing quest IDs?
 ```
 
 ---
@@ -270,11 +268,12 @@ Keep each marker under 200 characters.
 
 ## Write Rules
 
-- **Never create tasks or quests.** Read and report only — this holds even though `create_task_tool` / `create_quest_tool` exist; they're scoped to Viveka, not you.
-- **Never update any field other than `notes`.** Status, due dates, token rewards, descriptions — all off limits.
-- **Always fetch before writing notes** — reconstruct the full HTML before calling `update_task_notes_tool`.
+- **Never create tasks or quests.** Read and report only — this holds even though `task_create` / `quest_create` exist; they're scoped to Viveka, not you.
+- **Never update any field other than `notes`.** Status, due dates, title, tags, token rewards, descriptions — all off limits. Use `task_update` with `note_append` only.
+- **Do not read a note before appending.** `note_append` needs only the new body; passing the whole note back is impossible via this skill's write path.
 - **Reads need no confirmation.** Fetch freely.
-- **Note updates need no confirmation** — but always append, never overwrite prior content.
+- **Note updates need no confirmation** — but always append via `note_append`, never replace via `notes`.
+- **DONE is not yours to set.** `task_update(status="DONE")` is gated to tasks carrying the `opencode` tag and is performed by the orchestrator after the user confirms the work. You report; Viveka closes.
 
 ---
 
@@ -282,7 +281,7 @@ Keep each marker under 200 characters.
 
 - Create or delete tasks or quests
 - Mark tasks as complete
-- Modify token rewards, stats, due dates, or any field besides notes
+- Modify token rewards, stats, due dates, tags, titles, descriptions, or any field besides notes
 - Fetch data beyond the IDs you were given
 - Claim rewards (not applicable to you)
 - Guess a repository path or fall back to cwd when Gate 0 isn't satisfied
